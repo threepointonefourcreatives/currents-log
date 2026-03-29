@@ -1,0 +1,124 @@
+# ══════════════════════════════════════════════════════════════
+# PROJECT CURRENT — AI Coding Rules
+# An emotional tracking app with a nautical "Sailor's Log" metaphor.
+# ══════════════════════════════════════════════════════════════
+
+## 1. Language & Component Rules
+- ALL files MUST be strict TypeScript (.tsx / .ts). No .js or .jsx.
+- Use ONLY Functional Components with hooks. No class components.
+- Use React Native primitives (View, Text, TouchableOpacity, etc.). NO HTML elements.
+- Use StyleSheet.create() for ALL styles. NO CSS files, className, or Tailwind.
+- All text MUST be wrapped in <Text> components.
+
+## 2. Project Structure
+- **Screens / Routes** live in `/app` (Expo Router file-based routing).
+- **Reusable UI components** (e.g., <NeumorphicInput>, <MoodPebble>) live in `/components`.
+- **Theme, config, stores, types, lib** live in `/src/<folder>`.
+- Keep components small (<50 lines ideally). Extract early, extract often.
+
+## 3. Theme — Single Source of Truth
+- ALL colors, shadows, typography, and spacing come from `src/theme/theme.ts`.
+- **NEVER hardcode hex colors or shadow physics** directly in component files.
+- Import from theme: `import { Colors, Shadows, Typography } from '@/src/theme/theme';`
+
+## 4. UI Physics — "Indented Paper" Neumorphism
+The signature aesthetic. Elements appear PRESSED INTO the screen, not floating above it.
+
+### Light Canvas Indent
+- Background: #F9F8F1 (Warm Off-White)
+- Top-Left Inner Shadow:  X: 4, Y: 4, Blur: 8, Color: #000000 @ 5–8% opacity
+- Bottom-Right Inner Shadow: X: -4, Y: -4, Blur: 8, Color: #FFFFFF @ 80–100% opacity
+- Outer Drop Shadow: **STRICTLY ZERO**
+
+### Dark Canvas Indent (Captain's Cabin)
+- Fill: #222528 (slightly darker than canvas #2D3135)
+- Top-Left Inner Shadow:  X: 4, Y: 4, Blur: 8, Color: #000000 @ 40% opacity
+- Bottom-Right Inner Shadow: X: -4, Y: -4, Blur: 8, Color: #FFFFFF @ 10% opacity
+- Outer Drop Shadow: **STRICTLY ZERO**
+
+### Rules
+- NO standard "floating" drop shadows on indented elements.
+- NO 90-degree sharp corners. All indented elements use rounded corners.
+- Unlogged days are FLAT. Logged days use the Light Canvas Indent (pressed down).
+
+## 5. Color Palette — "Sunset-to-Dusk" Spectrum
+
+### Canvas
+- Light Canvas: #F9F8F1  (Warm Off-White)
+- Dark Canvas:  #2D3135  (Soft Charcoal)
+- Dark Fill:    #222528  (Dark Indent Fill)
+
+### Text
+- Primary on Light:   #2D3135  (Soft Charcoal)
+- Primary on Dark:    #F9F8F1  (Warm Off-White)
+- Secondary:          #A9B4C2  (Overcast Slate)
+
+### Mood Spectrum
+- 5 — Great (Clear Skies):       #EC4724  (Vibrant Terra Cotta)
+- 4 — Good (Steady Winds):       #F37F21  (Soft Orange)
+- 3 — Average (Calm Waters):     #d7d5b2  (Muted Sand)
+- 2 — Below Avg (Overcast):      #A9B4C2  (Overcast Slate)
+- 1 — Bad (Heavy Weather):       #5C6B73  (Deep Twilight)
+
+## 6. Typography
+- **Headings, Quotes, Mantras**: Lora (Serif) — use Italic for quotes/mantras.
+- **Body Text, Dates, UI Labels**: Nunito (Sans-serif) — soft, rounded terminals.
+- Font loading via @expo-google-fonts/lora and @expo-google-fonts/nunito.
+- Reference font families from theme.ts Typography object only.
+
+## 7. Graphics — @shopify/react-native-skia
+- **MANDATORY** for: wave charts, stained glass grid, animated gradient mesh backgrounds ("The Swell").
+- Use smooth bezier/spline curves for charts. NO harsh spikes.
+- Dynamic gradient fills must match mood data points.
+- Do NOT use SVG or react-native-svg for charts — Skia only.
+- This requires a custom development build (expo prebuild). NOT compatible with Expo Go.
+
+## 8. Architecture — Offline-First
+- ALL writes go to expo-sqlite FIRST for instant UI feedback.
+- Supabase is the remote sync target (PostgreSQL + Auth + Storage).
+- Sync queue managed via Zustand store.
+- Local entries have `sync_status`: 'pending' | 'synced' | 'modified'.
+- Background listener pushes pending entries to Supabase when online.
+
+## 9. Navigation
+- Use Expo Router (file-based routing).
+- The Captain's Cabin has NO bottom navigation bar.
+- Other sections maintain bottom navigation; icons go flat/unselected in menu state.
+
+## 10. Data Models
+### logs (local SQLite + remote Supabase)
+- id: UUID (PK)
+- user_id: UUID (FK)
+- date_logged: timestamp
+- mood_score: integer 1–5
+- color_hex: string
+- note: text (nullable)
+- sync_status: 'pending' | 'synced' | 'modified'  (LOCAL ONLY)
+
+### users (Supabase only, auth session cached locally)
+- id: UUID (PK)
+- email: string
+- display_name: string (nullable)
+- avatar_url: string (nullable)
+- compass_quote: text (nullable)
+- talisman_url: string (nullable)
+- notification_preference: 'Morning' | 'Evening' | 'Custom' | 'None'
+- created_at: timestamp
+
+## 11. Environment Variables
+- NEVER hardcode URLs, keys, or credentials.
+- Supabase config reads from EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.
+- All env vars use the EXPO_PUBLIC_ prefix for runtime access.
+
+## 12. Dependencies (Core)
+- expo (SDK 54)
+- expo-router
+- expo-sqlite
+- @supabase/supabase-js
+- @shopify/react-native-skia
+- @expo-google-fonts/lora, @expo-google-fonts/nunito
+- zustand
+- react-native-gesture-handler
+- react-native-reanimated
+- @gorhom/bottom-sheet
+- expo-notifications
