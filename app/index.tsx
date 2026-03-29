@@ -24,16 +24,22 @@ import CurrentLogo from '../components/CurrentLogo';
 import NeumorphicInput from '../components/NeumorphicInput';
 import PrimaryButton from '../components/PrimaryButton';
 import { Colors, Typography, Spacing } from '../src/theme/theme';
+import { supabase } from '../src/utils/supabase';
 
 export default function PrepareYourLog() {
   const [email, setEmail] = useState('');
   const { height } = useWindowDimensions();
   const router = useRouter();
 
-  const handleEmbark = useCallback(() => {
+  const handleEmbark = useCallback(async () => {
     Keyboard.dismiss();
-    router.push('/otp');
-  }, [router]);
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    if (error) {
+      alert(error.message);
+    } else {
+      router.push({ pathname: '/otp', params: { email } });
+    }
+  }, [email, router]);
 
   // Proportions derived from PDF (Page 1) — logo ~19%, input ~44%, button ~55%
   const logoSize = Math.round(height * 0.075);

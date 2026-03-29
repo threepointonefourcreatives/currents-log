@@ -30,7 +30,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/current-logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#F9F8F1"
@@ -46,6 +46,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6969fd27-e50a-4188-b47d-36eb82850cf0"
+      }
     }
   }
 }

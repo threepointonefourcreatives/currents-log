@@ -14,17 +14,12 @@ export const initDB = async (): Promise<void> => {
   }
   try {
     const db = await SQLite.openDatabaseAsync(DB_NAME);
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT NOT NULL,
-        score INTEGER NOT NULL,
-        note TEXT
-      );
-    `);
+    await db.execAsync(
+      'CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, score INTEGER, note TEXT);'
+    );
     console.log('DB Initialized: logs table ready');
   } catch (error) {
-    console.error('DB ERROR in initDB:', error);
+    console.error('DB Init Error:', error);
   }
 };
 

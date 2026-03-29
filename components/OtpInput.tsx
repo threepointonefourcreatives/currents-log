@@ -141,6 +141,7 @@ const styles = StyleSheet.create({
     width: 1,
     height: 1,
     opacity: 0,
+    color: '#1A1A1A',
   },
   cellRow: {
     flexDirection: 'row',
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
   digit: {
     fontFamily: Typography.sans.bold,
     fontSize: 22,
-    color: Colors.textPrimaryLight,
+    color: '#1A1A1A',
     zIndex: 1,
   },
   cursor: {

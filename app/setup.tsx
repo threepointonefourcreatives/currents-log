@@ -17,6 +17,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { saveProfile } from '../src/utils/profileStore';
+import { requestNotificationPermission, scheduleReminder } from '../src/utils/notifications';
 
 export default function SetupScreen() {
   const router = useRouter();
@@ -27,27 +28,40 @@ export default function SetupScreen() {
   const [schedule, setSchedule] = useState<ScheduleOption>('Evening');
 
   const pickAvatar = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [1, 1],
       quality: 0.8,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setAvatarUri(result.assets[0].uri);
+      const selectedUri = result.assets[0].uri;
+      setAvatarUri(selectedUri);
     }
   };
 
   const pickTalisman = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 0.8,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setTalismanUri(result.assets[0].uri);
+      const selectedUri = result.assets[0].uri;
+      setTalismanUri(selectedUri);
+    }
+  };
+
+  const handleNotificationChange = async (selected: ScheduleOption) => {
+    setSchedule(selected);
+    
+    if (selected !== 'None') {
+      const granted = await requestNotificationPermission();
+      if (Platform.OS !== 'web' && !granted) {
+        setSchedule('None');
+        alert('Permission required to set reminders.');
+      }
     }
   };
 
@@ -57,8 +71,11 @@ export default function SetupScreen() {
       mantra: mantra.trim(),
       avatarUri,
       talismanUri,
-      notificationsEnabled: schedule !== 'None',
+      notificationSchedule: schedule.toLowerCase() as any,
     });
+    
+    await scheduleReminder(schedule.toLowerCase() as 'morning' | 'evening' | 'custom' | 'none');
+
     router.replace('/(tabs)/surface');
   };
 
@@ -128,7 +145,7 @@ export default function SetupScreen() {
               <SegmentedToggle
                 options={['Morning', 'Evening', 'Custom', 'None']}
                 selectedOption={schedule}
-                onSelect={setSchedule}
+                onSelect={handleNotificationChange}
               />
             </View>
           </ScrollView>

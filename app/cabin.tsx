@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, Image, Pressable, StyleSheet, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { loadProfile, saveProfile, UserProfile } from '../src/utils/profileStore';
 import { Colors, Typography, Spacing, MoodColors, Radii } from '../src/theme/theme';
@@ -10,6 +10,7 @@ import { requestNotificationPermission, scheduleReminder } from '../src/utils/no
 
 export default function CabinScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [moodCounts, setMoodCounts] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
 
@@ -130,7 +131,7 @@ export default function CabinScreen() {
         </ScrollView>
 
         {/* Faux Tab Bar */}
-        <View style={styles.fauxTabBar}>
+        <View style={[styles.fauxTabBar, { paddingBottom: insets.bottom, height: 85 + insets.bottom }]}>
           <Pressable style={styles.fauxTabButton} onPress={() => router.replace('/(tabs)/surface')}>
             <Feather name="calendar" size={24} color="#8A887E" />
           </Pressable>

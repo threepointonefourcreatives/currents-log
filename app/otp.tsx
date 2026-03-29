@@ -24,9 +24,12 @@ import CurrentLogo from '../components/CurrentLogo';
 import OtpInput from '../components/OtpInput';
 import PrimaryButton from '../components/PrimaryButton';
 import { Colors, Typography, Spacing } from '../src/theme/theme';
+import { supabase } from '../src/utils/supabase';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function OtpScreen() {
   const router = useRouter();
+  const { email } = useLocalSearchParams<{ email: string }>();
   const { height } = useWindowDimensions();
 
   // PDF proportions (Page 2)
@@ -38,14 +41,18 @@ export default function OtpScreen() {
   const otpToButton = Math.round(height * 0.14);
 
   const handleOtpComplete = useCallback(
-    (code: string) => {
-      // Auto-navigate on 6th digit
+    async (code: string) => {
       Keyboard.dismiss();
-      setTimeout(() => {
-        router.replace('/success');
-      }, 400);
+      const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+      if (error) {
+        alert(error.message);
+      } else if (data.session) {
+        setTimeout(() => {
+          router.replace('/setup');
+        }, 400);
+      }
     },
-    [router],
+    [email, router],
   );
 
   const handleSendAgain = useCallback(() => {

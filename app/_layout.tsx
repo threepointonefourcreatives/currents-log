@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { initDB } from '../src/utils/db';
 import { saveProfile, loadProfile } from '../src/utils/profileStore';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   Lora_400Regular,
   Lora_400Regular_Italic,
@@ -89,7 +90,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <SafeAreaProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -98,7 +99,7 @@ export default function RootLayout() {
           animation: 'fade',
         }}
       />
-    </>
+    </SafeAreaProvider>
   );
 }
 
