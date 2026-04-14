@@ -67,7 +67,7 @@ export default function OtpInput({ length = 6, onComplete }: OtpInputProps) {
         keyboardType="number-pad"
         autoFocus
         caretHidden
-        style={styles.hiddenInput}
+        style={[styles.hiddenInput, { color: '#1A1A1A' }]}
         testID="otp-hidden-input"
       />
 

@@ -14,6 +14,7 @@ import CurrentLogo from '../../components/CurrentLogo';
 import Header from '../../src/components/Header';
 import { useFocusEffect } from 'expo-router';
 import { getLogs } from '../../src/utils/db';
+import { parseSafeDate } from '../../src/utils/dateUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_HEIGHT = 450;
@@ -241,10 +242,16 @@ export default function SurfaceScreen() {
   }
 
   const formatHeaderDate = (dateStr: string) => {
-    const ds = new Date(dateStr.length === 10 ? dateStr + 'T12:00:00Z' : dateStr);
-    const day = ds.getDate();
-    const suffix = (day >= 11 && day <= 13) ? 'th' : ['st', 'nd', 'rd'][(day % 10) - 1] || 'th';
-    return `${day}${suffix} ${ds.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+    try {
+      const strToParse = dateStr.length === 10 ? dateStr + 'T12:00:00Z' : dateStr;
+      const ds = parseSafeDate(strToParse);
+      if (ds.getTime() === 0) return 'Unknown Date';
+      const day = ds.getDate();
+      const suffix = (day >= 11 && day <= 13) ? 'th' : ['st', 'nd', 'rd'][(day % 10) - 1] || 'th';
+      return `${day}${suffix} ${ds.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+    } catch {
+      return 'Unknown Date';
+    }
   };
 
   let displayTitle = '';
@@ -420,7 +427,15 @@ export default function SurfaceScreen() {
             activeLog ? (
               <View style={[styles.logCard, { backgroundColor: MoodColors[activeLog.score] }]}>
                 <Text style={styles.timeLabelTextCard}>
-                  {new Date(activeLog.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase()}
+                  {(() => {
+                    try {
+                      const d = parseSafeDate(activeLog.date);
+                      if (d.getTime() === 0) return '--:--';
+                      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase();
+                    } catch {
+                      return '--:--';
+                    }
+                  })()}
                 </Text>
                 <Text style={styles.logCardNote}>“{activeLog.note}”</Text>
               </View>

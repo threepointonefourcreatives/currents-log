@@ -8,6 +8,7 @@ import CurrentLogo from '../../components/CurrentLogo';
 import Header from '../../src/components/Header';
 import { useFocusEffect } from 'expo-router';
 import { getLogs } from '../../src/utils/db';
+import { parseSafeDate } from '../../src/utils/dateUtils';
 
 type MockLog = { id: string; date: string; score: number; note: string };
 
@@ -58,7 +59,7 @@ export default function LogbookScreen() {
 
   const sortedData = useMemo(() => {
     // Ascending sort (oldest first) as requested
-    return [...logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return [...logs].sort((a, b) => parseSafeDate(a.date).getTime() - parseSafeDate(b.date).getTime());
   }, [logs]);
 
   useEffect(() => {
@@ -87,16 +88,27 @@ export default function LogbookScreen() {
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current;
 
   const formatPillDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const day = d.getDate();
-    const suffix = (day >= 11 && day <= 13) ? 'th' : ['st', 'nd', 'rd'][(day % 10) - 1] || 'th';
-    const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
-    const year = d.getFullYear();
-    return `${day}${suffix} ${month} ${year}`;
+    try {
+      const d = parseSafeDate(dateStr);
+      if (d.getTime() === 0) return 'Unknown Date';
+      const day = d.getDate();
+      const suffix = (day >= 11 && day <= 13) ? 'th' : ['st', 'nd', 'rd'][(day % 10) - 1] || 'th';
+      const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+      const year = d.getFullYear();
+      return `${day}${suffix} ${month} ${year}`;
+    } catch {
+      return 'Unknown Date';
+    }
   };
 
   const formatTimestamp = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase();
+    try {
+      const d = parseSafeDate(dateStr);
+      if (d.getTime() === 0) return '--:--';
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase();
+    } catch {
+      return '--:--';
+    }
   };
 
   const renderItem = ({ item }: { item: MockLog }) => {

@@ -35,7 +35,10 @@ export default function SetupScreen() {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const selectedUri = result.assets[0].uri;
+      let selectedUri = result.assets[0].uri;
+      if (Platform.OS === 'android' && !selectedUri.startsWith('file://')) {
+        selectedUri = `file://${selectedUri}`;
+      }
       setAvatarUri(selectedUri);
     }
   };
@@ -48,7 +51,10 @@ export default function SetupScreen() {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const selectedUri = result.assets[0].uri;
+      let selectedUri = result.assets[0].uri;
+      if (Platform.OS === 'android' && !selectedUri.startsWith('file://')) {
+        selectedUri = `file://${selectedUri}`;
+      }
       setTalismanUri(selectedUri);
     }
   };

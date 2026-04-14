@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
+import { normalizeDateString } from './dateUtils';
 
 const DB_NAME = 'app_logs.db';
 const IS_WEB = Platform.OS === 'web';
@@ -63,9 +64,10 @@ export const getLogs = async (): Promise<{ id: string, date: string, score: numb
     try {
       const logsStr = localStorage.getItem('web_logs') || '[]';
       const logs = JSON.parse(logsStr) as { id: string, date: string, score: number, note: string }[];
-      logs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      console.log(`DB Fetch Retrieved ${logs.length} logs (Web)`);
-      return logs;
+      const normalizedLogs = logs.map(l => ({ ...l, date: normalizeDateString(l.date) }));
+      normalizedLogs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      console.log(`DB Fetch Retrieved ${normalizedLogs.length} logs (Web)`);
+      return normalizedLogs;
     } catch (e) {
       console.error('DB ERROR in getLogs (Web):', e);
       return [];
@@ -80,7 +82,7 @@ export const getLogs = async (): Promise<{ id: string, date: string, score: numb
     console.log(`DB Fetch Retrieved ${result.length} logs`);
     return result.map(row => ({
       id: String(row.id),
-      date: row.date,
+      date: normalizeDateString(row.date),
       score: row.score,
       note: row.note || ''
     }));
