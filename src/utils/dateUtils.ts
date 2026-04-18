@@ -1,3 +1,5 @@
+import { Alert } from 'react-native';
+
 export const parseSafeDate = (dateStr: string | undefined | null): Date => {
   if (!dateStr) return new Date(0); // Epoch fallback for completely empty strings
 
@@ -32,6 +34,7 @@ export const parseSafeDate = (dateStr: string | undefined | null): Date => {
 
   // Ultimate fallback to Epoch to prevent polluting current day and avoid breaking the map loops
   console.warn(`[DateUtils] Using epoch fallback for unparseable date string: ${dateStr}`);
+  Alert.alert("Parser Fallback Triggered", "Raw string was: " + dateStr);
   return new Date(0);
 };
 

@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 import { normalizeDateString } from './dateUtils';
 
 const DB_NAME = 'app_logs.db';
@@ -19,8 +19,11 @@ export const initDB = async (): Promise<void> => {
       'CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, score INTEGER, note TEXT);'
     );
     console.log('DB Initialized: logs table ready');
-  } catch (error) {
+  } catch (error: any) {
     console.error('DB Init Error:', error);
+    if (!IS_WEB) {
+      Alert.alert('DB Error', error.message || JSON.stringify(error));
+    }
   }
 };
 
@@ -54,8 +57,12 @@ export const addLog = async (score: number, note: string): Promise<void> => {
       note
     );
     console.log('DB Insert Success:', { date, score, note });
-  } catch (error) {
+  } catch (error: any) {
     console.error('DB ERROR in addLog:', error);
+    if (!IS_WEB) {
+      Alert.alert('DB Error', error.message || JSON.stringify(error));
+    }
+    throw error;
   }
 };
 
@@ -86,8 +93,11 @@ export const getLogs = async (): Promise<{ id: string, date: string, score: numb
       score: row.score,
       note: row.note || ''
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('DB ERROR in getLogs:', error);
+    if (!IS_WEB) {
+      Alert.alert('DB Error', error.message || JSON.stringify(error));
+    }
     return [];
   }
 };
