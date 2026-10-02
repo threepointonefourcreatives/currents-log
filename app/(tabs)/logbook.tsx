@@ -149,7 +149,13 @@ export default function LogbookScreen() {
           keyExtractor={item => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
+          style={{ flex: 1, width: '100%' }}
+          horizontal={false}
+          showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
+          directionalLockEnabled={true}
+          bounces={true}
+          alwaysBounceHorizontal={false}
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
           onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
@@ -187,6 +193,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.lightCanvas,
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -238,6 +247,9 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     position: 'relative',
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   listContent: {
     paddingBottom: 120, // Breathing space at end of list to clear tab bar
@@ -286,11 +298,13 @@ const styles = StyleSheet.create({
     right: typeof Spacing.xl === 'number' ? Spacing.xl - 3.5 : 20.5,
     top: typeof Spacing.xl === 'number' ? Spacing.xl : 24,
     bottom: typeof Spacing.xl === 'number' ? Spacing.xl : 24,
+    alignItems: 'flex-end',
     zIndex: 5,
   },
   scrubberRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   floatingPill: {
     backgroundColor: Colors.lightCanvas,

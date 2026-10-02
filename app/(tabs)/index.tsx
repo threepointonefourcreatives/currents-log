@@ -15,7 +15,7 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   Colors,
@@ -38,6 +38,8 @@ export default function LoggingScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const bottomClearance = 70 + insets.bottom + Spacing.sm;
 
   // Animations
   const backgroundColor = useSharedValue<string>(Colors.lightCanvas);
@@ -161,7 +163,7 @@ export default function LoggingScreen() {
               label="LOG"
               onPress={handleLog}
               disabled={!moodScore || isSubmitting}
-              style={styles.logButton}
+              style={[styles.logButton, { marginBottom: bottomClearance }]}
             />
           </Animated.View>
         </KeyboardAvoidingView>

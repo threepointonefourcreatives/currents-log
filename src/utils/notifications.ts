@@ -47,9 +47,9 @@ export const scheduleReminder = async (type: 'morning' | 'evening' | 'custom' | 
         body: "How are the waters looking today, Captain?",
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: hour,
         minute: 0,
-        repeats: true,
       },
     });
   } catch (error) {

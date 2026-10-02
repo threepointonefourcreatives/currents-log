@@ -9,6 +9,7 @@ import {
   Text,
   StyleSheet,
   type ViewStyle,
+  type StyleProp,
 } from 'react-native';
 import { Colors, Typography, Spacing, Radii } from '../src/theme/theme';
 
@@ -16,7 +17,7 @@ interface PrimaryButtonProps {
   label: string;
   onPress: () => void;
   disabled?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function PrimaryButton({

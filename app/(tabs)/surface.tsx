@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, Dimensions, Platform, TouchableOpacity, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, Dimensions, Platform, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useDerivedValue, useAnimatedStyle, withTiming, runOnJS, interpolate, type SharedValue } from 'react-native-reanimated';
 import { Canvas, Path, LinearGradient, vec, Circle, Skia } from '@shopify/react-native-skia';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -47,6 +47,40 @@ function getTrendQuote(data: MockLog[]) {
   return "Deep waters and heavy weather. Batten down the hatches, this too shall pass.";
 }
 
+const RusticLeafletCard = ({ quote }: { quote: string }) => {
+  return (
+    <View style={styles.indentedWell}>
+      <View style={styles.leafletCard}>
+        {/* Torn Deckled Top Jagged Teeth */}
+        <View style={styles.topTornEdgeRow}>
+          {Array.from({ length: 22 }).map((_, i) => (
+            <View key={`top-tooth-${i}`} style={styles.tornToothTop} />
+          ))}
+        </View>
+
+        {/* Inner Stitched Deckle Border */}
+        <View style={styles.leafletDeckleBorder}>
+          <View style={styles.leafletHeaderRow}>
+            <View style={styles.leafletLine} />
+            <Text style={styles.leafletTagText}>✦ VOYAGE REFLECTION ✦</Text>
+            <View style={styles.leafletLine} />
+          </View>
+          <Text style={styles.leafletQuoteText}>
+            “{quote}”
+          </Text>
+        </View>
+
+        {/* Torn Deckled Bottom Jagged Teeth */}
+        <View style={styles.bottomTornEdgeRow}>
+          {Array.from({ length: 22 }).map((_, i) => (
+            <View key={`bottom-tooth-${i}`} style={styles.tornToothBottom} />
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+};
+
 // Format date to "10th March 2026"
 function getFormattedDate() {
   const date = new Date();
@@ -58,31 +92,47 @@ function getFormattedDate() {
 }
 
 // Isolate Skia chart rendering to prevent aggressive re-renders on JS state changes
-const MemoizedWavesChart = React.memo(({ data, scrubPosition, onActivePointChange, activeNodeIdx }: { data: MockLog[], scrubPosition: SharedValue<number>, onActivePointChange: (idx: number | null) => void, activeNodeIdx: SharedValue<number> }) => {
+const MemoizedWavesChart = React.memo(({ 
+  data, 
+  scrubPosition, 
+  onActivePointChange, 
+  activeNodeIdx,
+  chartHeight,
+  screenWidth
+}: { 
+  data: MockLog[], 
+  scrubPosition: SharedValue<number>, 
+  onActivePointChange: (idx: number | null) => void, 
+  activeNodeIdx: SharedValue<number>,
+  chartHeight: number,
+  screenWidth: number
+}) => {
   if (data.length === 0) {
     return (
-      <View style={[styles.chartContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.chartContainer, { height: chartHeight, justifyContent: 'center', alignItems: 'center' }]}>
         <Text style={styles.patternCardText}>No logs recorded for this day.</Text>
       </View>
     );
   }
 
-  const pointSpacing = data.length > 1 ? SCREEN_WIDTH / (data.length - 1) : SCREEN_WIDTH;
+  const topPadding = 30;
+  const bottomPadding = 45;
+  const pointSpacing = data.length > 1 ? screenWidth / (data.length - 1) : screenWidth;
 
   const points = useMemo(() => {
     if (data.length === 1) {
-      const y = interpolate(data[0].score, [1, 5], [CHART_HEIGHT - BOTTOM_PADDING, TOP_PADDING]);
+      const y = interpolate(data[0].score, [1, 5], [chartHeight - bottomPadding, topPadding]);
       return [
         { x: 0, y, score: data[0].score },
-        { x: SCREEN_WIDTH, y, score: data[0].score },
+        { x: screenWidth, y, score: data[0].score },
       ];
     }
     return data.map((d, i) => {
       const x = i * pointSpacing;
-      const y = interpolate(d.score, [1, 5], [CHART_HEIGHT - BOTTOM_PADDING, TOP_PADDING]);
+      const y = interpolate(d.score, [1, 5], [chartHeight - bottomPadding, topPadding]);
       return { x, y, score: d.score };
     });
-  }, [data, pointSpacing]);
+  }, [data, pointSpacing, chartHeight, screenWidth]);
 
   const path = useMemo(() => {
     const p = Skia.Path.Make();
@@ -100,11 +150,11 @@ const MemoizedWavesChart = React.memo(({ data, scrubPosition, onActivePointChang
   const fillPath = useMemo(() => {
     if (points.length < 2) return path.copy();
     const p = path.copy();
-    p.lineTo(SCREEN_WIDTH, CHART_HEIGHT);
-    p.lineTo(0, CHART_HEIGHT);
+    p.lineTo(screenWidth, chartHeight);
+    p.lineTo(0, chartHeight);
     p.close();
     return p;
-  }, [path, points]);
+  }, [path, points, screenWidth, chartHeight]);
 
   // Vertical stroke tracking the scrub
   const indicatorWidth = 1; // Width of the indicator line
@@ -117,7 +167,7 @@ const MemoizedWavesChart = React.memo(({ data, scrubPosition, onActivePointChang
 
   const gesture = Gesture.Pan()
     .onBegin((e) => {
-      scrubPosition.value = Math.max(0, Math.min(e.x, SCREEN_WIDTH));
+      scrubPosition.value = Math.max(0, Math.min(e.x, screenWidth));
       if (data.length > 1) {
         const closestIdx = Math.round(scrubPosition.value / pointSpacing);
         activeNodeIdx.value = Math.max(0, Math.min(closestIdx, data.length - 1));
@@ -127,7 +177,7 @@ const MemoizedWavesChart = React.memo(({ data, scrubPosition, onActivePointChang
       }
     })
     .onChange((e) => {
-      scrubPosition.value = Math.max(0, Math.min(e.x, SCREEN_WIDTH));
+      scrubPosition.value = Math.max(0, Math.min(e.x, screenWidth));
       if (data.length > 1) {
         const closestIdx = Math.round(scrubPosition.value / pointSpacing);
         activeNodeIdx.value = Math.max(0, Math.min(closestIdx, data.length - 1));
@@ -144,13 +194,13 @@ const MemoizedWavesChart = React.memo(({ data, scrubPosition, onActivePointChang
 
   return (
     <GestureDetector gesture={gesture}>
-      <Animated.View style={{ width: SCREEN_WIDTH, height: CHART_HEIGHT }}>
+      <Animated.View style={{ width: screenWidth, height: chartHeight }}>
         <Canvas style={{ flex: 1 }}>
           {/* Gradient fill representing the ocean depths */}
           <Path path={fillPath}>
             <LinearGradient
               start={vec(0, 0)}
-              end={vec(0, CHART_HEIGHT)} // Explicit canvasHeight as requested
+              end={vec(0, chartHeight)}
               colors={[MoodColors[5], MoodColors[4], MoodColors[3], MoodColors[2], MoodColors[1]]}
               positions={[0, 0.25, 0.5, 0.75, 1]}
             />
@@ -193,6 +243,15 @@ export default function SurfaceScreen() {
   const [logs, setLogs] = useState<MockLog[]>([]);
   const scrubPosition = useSharedValue(-1);
   const activeNodeIdx = useSharedValue(-1);
+
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
+  const CHART_HEIGHT = Math.min(320, Math.round(windowHeight * 0.35));
+  const GRID_PADDING = Spacing.xl * 2;
+  const GRID_GAP = 4;
+  const TILE_WIDTH = Math.floor((windowWidth - GRID_PADDING - (6 * GRID_GAP)) / 7);
+  const bottomClearance = 70 + insets.bottom + Spacing.sm;
 
   useFocusEffect(
     useCallback(() => {
@@ -287,7 +346,8 @@ export default function SurfaceScreen() {
         return;
       }
 
-      const fileUri = FileSystem.cacheDirectory + 'Captains_Log.csv';
+      const dir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || '';
+      const fileUri = dir + 'Captains_Log.csv';
       await FileSystem.writeAsStringAsync(fileUri, formattedString);
 
       const isAvailable = await Sharing.isAvailableAsync();
@@ -344,23 +404,25 @@ export default function SurfaceScreen() {
         </View>
 
         {/* Chart Area */}
-        <Animated.View style={{ width: SCREEN_WIDTH, height: CHART_HEIGHT, marginBottom: Spacing.xxl }}>
+        <Animated.View style={{ width: windowWidth, height: CHART_HEIGHT, marginBottom: Spacing.md }}>
           {viewMode === 'waves' ? (
             <MemoizedWavesChart 
               data={dailyLogs} 
               scrubPosition={scrubPosition} 
               onActivePointChange={setActivePointIndex}
               activeNodeIdx={activeNodeIdx}
+              chartHeight={CHART_HEIGHT}
+              screenWidth={windowWidth}
             />
           ) : (
             <>
              <View style={styles.daysHeader}>
                {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => (
-                 <Text key={d} style={styles.dayHeaderText}>{d}</Text>
+                 <Text key={d} style={[styles.dayHeaderText, { width: TILE_WIDTH }]}>{d}</Text>
                ))}
              </View>
              <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-               <View style={styles.gridContainer}>
+               <View style={[styles.gridContainer, { gap: GRID_GAP }]}>
                  {currentMonthDays.map(day => {
                  const dayStr = day.toString().padStart(2, '0');
                  const datePrefix = `${monthPrefix}-${dayStr}`;
@@ -377,6 +439,7 @@ export default function SurfaceScreen() {
                      onPress={() => setSelectedGridDate(isSelected ? null : datePrefix)}
                      style={[
                        styles.dayBox,
+                       { width: TILE_WIDTH, height: TILE_WIDTH },
                        logsForDay.length === 0 && styles.emptyDayBox,
                        isSelected && styles.selectedDayBox
                      ]}
@@ -401,12 +464,12 @@ export default function SurfaceScreen() {
                })}
              </View>
              
-             <View style={{ height: Spacing.xl }} />
+             <View style={{ height: Spacing.md }} />
 
-             <View style={styles.gridContainer}>
+             <View style={[styles.gridContainer, { gap: GRID_GAP }]}>
                {/* Next Month Scroll Preview */}
                {DUMMY_BOXES.map((gradColors, index) => (
-                 <View key={`dummy-${index}`} style={[styles.dayBox, { opacity: 0.3 }]}>
+                 <View key={`dummy-${index}`} style={[styles.dayBox, { width: TILE_WIDTH, height: TILE_WIDTH, opacity: 0.3 }]}>
                    <ExpoLinearGradient
                      colors={gradColors as [string, string, ...string[]]}
                      start={{ x: 0, y: 0 }}
@@ -422,7 +485,7 @@ export default function SurfaceScreen() {
         </Animated.View>
 
         {/* Bottom Card - Pattern Engine or Active Log */}
-        <View style={styles.cardWrapper}>
+        <View style={[styles.cardWrapper, { marginBottom: bottomClearance }]}>
           {viewMode === 'waves' ? (
             activeLog ? (
               <View style={[styles.logCard, { backgroundColor: MoodColors[activeLog.score] }]}>
@@ -440,32 +503,12 @@ export default function SurfaceScreen() {
                 <Text style={styles.logCardNote}>“{activeLog.note}”</Text>
               </View>
             ) : (
-              <View style={[styles.logCard, { overflow: 'hidden' }]}>
-                <ExpoLinearGradient
-                  colors={dailyLogsGradient as [string, string, ...string[]]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 1 }}
-                  style={[StyleSheet.absoluteFillObject, { opacity: dailyLogs.length > 0 ? 1 : 0.4 }]}
-                />
-                <Text style={[styles.patternCardText, { color: dailyLogs.length > 0 ? Colors.lightCanvas : Colors.textPrimaryLight }]}>
-                  {getTrendQuote(dailyLogs)}
-                </Text>
-              </View>
+              <RusticLeafletCard quote={getTrendQuote(dailyLogs)} />
             )
           ) : (
             // Surface Mode Bottom Area
             selectedGridDate ? (
-              <View style={[styles.logCard, { overflow: 'hidden' }]}>
-                <ExpoLinearGradient
-                  colors={selectedGridGradient as [string, string, ...string[]]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 1 }}
-                  style={[StyleSheet.absoluteFillObject, { opacity: selectedDayLogs.length > 0 ? 1 : 0.4 }]}
-                />
-                <Text style={[styles.patternCardText, { color: selectedDayLogs.length > 0 ? Colors.lightCanvas : Colors.textPrimaryLight }]}>
-                  {getTrendQuote(selectedDayLogs)}
-                </Text>
-              </View>
+              <RusticLeafletCard quote={getTrendQuote(selectedDayLogs)} />
             ) : (
               <View style={styles.tallyContainer}>
                 {[5, 4, 3, 2, 1].map(score => (
@@ -628,16 +671,16 @@ const styles = StyleSheet.create({
   },
   daysHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: 4,
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.sm,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xs,
   },
   dayHeaderText: {
     fontFamily: Typography.sans.bold,
-    fontSize: 10,
+    fontSize: 9,
     color: Colors.textSecondary,
-    width: (SCREEN_WIDTH - (Spacing.xl * 2) - (6 * 6)) / 7,
     textAlign: 'center',
     opacity: 0.8,
   },
@@ -647,12 +690,11 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6, // Changed from 10 to 6 for tighter packing
+    gap: 4,
     justifyContent: 'flex-start',
     paddingHorizontal: Spacing.xl,
   },
   dayBox: {
-    width: (SCREEN_WIDTH - (Spacing.xl * 2) - (6 * 6)) / 7,
     aspectRatio: 1,
     borderRadius: Radii.sm, // 8px
     overflow: 'hidden',
@@ -720,5 +762,98 @@ const styles = StyleSheet.create({
     fontFamily: Typography.sans.bold,
     fontSize: 14,
     color: Colors.textPrimaryLight,
+  },
+  indentedWell: {
+    width: '100%',
+    backgroundColor: '#EAE7D8', // Light Canvas Indent Sand Well (pressed into #F9F8F1)
+    borderRadius: Radii.lg, // 16px
+    padding: Spacing.xs, // 4px padding so leaflet sits inside the indented paper well
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    borderTopColor: 'rgba(0, 0, 0, 0.12)',
+    borderLeftColor: 'rgba(0, 0, 0, 0.10)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.95)',
+    borderRightColor: 'rgba(255, 255, 255, 0.85)',
+  },
+  leafletCard: {
+    backgroundColor: '#F4EFE0', // Authentic warm aged parchment paper
+    borderRadius: 12,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    minHeight: 110,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(195, 178, 150, 0.6)', // Soft aged paper edge accent
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  topTornEdgeRow: {
+    position: 'absolute',
+    top: -5,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+    zIndex: 10,
+  },
+  bottomTornEdgeRow: {
+    position: 'absolute',
+    bottom: -5,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+    zIndex: 10,
+  },
+  tornToothTop: {
+    width: 7,
+    height: 7,
+    backgroundColor: '#EAE7D8', // Matches well background cutout
+    transform: [{ rotate: '45deg' }],
+  },
+  tornToothBottom: {
+    width: 7,
+    height: 7,
+    backgroundColor: '#EAE7D8', // Matches well background cutout
+    transform: [{ rotate: '45deg' }],
+  },
+  leafletDeckleBorder: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(196, 180, 154, 0.65)', // Dashed inner deckled edge fiber
+    borderStyle: 'dashed',
+    borderRadius: 8,
+  },
+  leafletHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+    gap: 8,
+  },
+  leafletLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(180, 160, 130, 0.4)',
+  },
+  leafletTagText: {
+    fontFamily: Typography.serif.bold,
+    fontSize: 9,
+    letterSpacing: 1.8,
+    color: '#7C6B59', // Aged iron gall / warm brown tag
+    textTransform: 'uppercase',
+  },
+  leafletQuoteText: {
+    fontFamily: Typography.serif.italic,
+    fontSize: 15,
+    color: '#382E25', // Deep sepia iron gall ink
+    textAlign: 'center',
+    lineHeight: 23,
+    paddingHorizontal: Spacing.xs,
   },
 });

@@ -22,7 +22,7 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -50,8 +50,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "6969fd27-e50a-4188-b47d-36eb82850cf0"
+        "projectId": "a3fb0b62-bcf0-494b-9f20-ac0c6b7a66e3"
       }
-    }
+    },
+    "owner": "vai2090"
   }
 }
