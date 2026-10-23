@@ -5,7 +5,7 @@ import Animated, { useSharedValue, useDerivedValue, useAnimatedStyle, withTiming
 import { Canvas, Path, LinearGradient, vec, Circle, Skia } from '@shopify/react-native-skia';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 
 import { Colors, Typography, Spacing, MoodColors, Radii, Shadows, Durations } from '../../src/theme/theme';
@@ -15,6 +15,9 @@ import Header from '../../src/components/Header';
 import { useFocusEffect } from 'expo-router';
 import { getLogs } from '../../src/utils/db';
 import { parseSafeDate } from '../../src/utils/dateUtils';
+import { logger } from '../../src/utils/logger';
+import { csvCell } from '../../src/utils/csv';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_HEIGHT = 450;
@@ -335,27 +338,28 @@ export default function SurfaceScreen() {
       const allLogs = await getLogs();
       const csvHeader = "Date,Score,Note\n";
       const csvRows = allLogs.map(log => {
-        const safeNote = log.note.replace(/"/g, '""');
-        return `${log.date},${log.score},"${safeNote}"`;
+        return `${csvCell(log.date)},${Number(log.score) || 0},${csvCell(log.note)}`;
       }).join('\n');
       const formattedString = csvHeader + csvRows;
 
       if (Platform.OS === 'web') {
-        console.log(formattedString);
-        alert('Logs exported to console (Web environment).');
+        // Never dump journal entries into the browser console.
+        alert('Export is available in the mobile app.');
         return;
       }
 
-      const dir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || '';
+      const dir = FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? '';
       const fileUri = dir + 'Captains_Log.csv';
       await FileSystem.writeAsStringAsync(fileUri, formattedString);
 
       const isAvailable = await Sharing.isAvailableAsync();
       if (isAvailable) {
-        await Sharing.shareAsync(fileUri);
+        await Sharing.shareAsync(fileUri, { mimeType: 'text/csv', dialogTitle: 'Export your log' });
       }
+      // Don't leave a plaintext copy of the journal lying in the cache folder.
+      await FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => {});
     } catch (error) {
-      console.error('Export error:', error);
+      logger.error('Export error:', error);
     }
   };
 

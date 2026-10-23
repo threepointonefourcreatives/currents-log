@@ -18,7 +18,15 @@
         "backgroundColor": "#F9F8F1"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.current.app"
+      "package": "com.current.app",
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -40,7 +48,32 @@
         "expo-sqlite",
         {
           "enableFTS": false,
-          "useSQLCipher": false
+          "useSQLCipher": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraProguardRules": "-keep class com.swmansion.reanimated.** { *; }\n-keep class com.shopify.reactnative.skia.** { *; }\n-keep class com.facebook.react.turbomodule.core.** { *; }\n-keep class com.facebook.react.bridge.NativeModule { *; }",
+            "usesCleartextTraffic": false
+          }
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Current uses your photos only when you choose an avatar or talisman.",
+          "cameraPermission": false,
+          "microphonePermission": false
         }
       ]
     ],

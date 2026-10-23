@@ -7,6 +7,7 @@
 
 import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
+import { logger } from '../utils/logger';
 
 const DB_NAME = 'current.db';
 
@@ -16,7 +17,7 @@ const DB_NAME = 'current.db';
  */
 export const openDatabase = (): SQLite.SQLiteDatabase | null => {
   if (Platform.OS === 'web') {
-    console.log('Web environment detected: Mocking database database creation.');
+    logger.debug('Web environment detected: Mocking database database creation.');
     return null;
   }
   return SQLite.openDatabaseSync(DB_NAME);
@@ -27,7 +28,7 @@ export const openDatabase = (): SQLite.SQLiteDatabase | null => {
  */
 export const initializeDatabase = async (): Promise<void> => {
   if (Platform.OS === 'web') {
-    console.log('Web environment detected: Mocking database initialization.');
+    logger.debug('Web environment detected: Mocking database initialization.');
     return;
   }
   const db = openDatabase();
@@ -113,7 +114,7 @@ export const insertLog = (
   }
 ): void => {
   if (Platform.OS === 'web') {
-    console.log('Web environment detected: Mocking database save.');
+    logger.debug('Web environment detected: Mocking database save.');
     return;
   }
   if (!db) return;

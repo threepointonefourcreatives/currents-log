@@ -16,6 +16,7 @@ import {
   Keyboard,
   Pressable,
   useWindowDimensions,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -24,7 +25,8 @@ import CurrentLogo from '../components/CurrentLogo';
 import OtpInput from '../components/OtpInput';
 import PrimaryButton from '../components/PrimaryButton';
 import { Colors, Typography, Spacing } from '../src/theme/theme';
-import { supabase } from '../src/utils/supabase';
+import { supabase, isSupabaseConfigured, isPlausibleEmail, SUPABASE_NOT_CONFIGURED_MESSAGE } from '../src/utils/supabase';
+import { safeErrorMessage } from '../src/utils/logger';
 import { useLocalSearchParams } from 'expo-router';
 
 export default function OtpScreen() {
@@ -43,13 +45,31 @@ export default function OtpScreen() {
   const handleOtpComplete = useCallback(
     async (code: string) => {
       Keyboard.dismiss();
-      const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
-      if (error) {
-        alert(error.message);
-      } else if (data.session) {
-        setTimeout(() => {
-          router.replace('/setup');
-        }, 400);
+      if (!isSupabaseConfigured) {
+        Alert.alert('Sign-in unavailable', SUPABASE_NOT_CONFIGURED_MESSAGE);
+        return;
+      }
+      // `email` arrives as a route param, which anyone can set via a deep link
+      // (current://otp?email=...). That is harmless — Supabase only issues a
+      // session if the code matches the one it emailed to that address — but we
+      // still refuse junk input before sending it anywhere.
+      const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+      const cleanCode = code.replace(/\D/g, '');
+      if (!isPlausibleEmail(cleanEmail) || cleanCode.length < 6 || cleanCode.length > 10) {
+        Alert.alert('Invalid code', 'Please go back and request a new code.');
+        return;
+      }
+      try {
+        const { data, error } = await supabase.auth.verifyOtp({ email: cleanEmail, token: cleanCode, type: 'email' });
+        if (error) {
+          Alert.alert('Invalid code', 'That code is incorrect or has expired.');
+        } else if (data.session) {
+          setTimeout(() => {
+            router.replace('/setup');
+          }, 400);
+        }
+      } catch (err) {
+        Alert.alert('Network error', safeErrorMessage(err, 'Please check your connection and try again.'));
       }
     },
     [email, router],

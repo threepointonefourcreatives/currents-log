@@ -7,6 +7,7 @@ import { Colors, Typography, Spacing, MoodColors, Radii } from '../src/theme/the
 import { FontAwesome5, Feather } from '@expo/vector-icons';
 import { getLogs } from '../src/utils/db';
 import { requestNotificationPermission, scheduleReminder } from '../src/utils/notifications';
+import { logger } from '../src/utils/logger';
 
 export default function CabinScreen() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function CabinScreen() {
           });
           setMoodCounts(counts);
         } catch (error) {
-          console.error(error);
+          logger.error(error);
         }
       };
       fetchData();

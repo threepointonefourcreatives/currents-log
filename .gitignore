@@ -44,3 +44,6 @@ yarn-error.*
 
 app-example
 
+
+# Metro bundler cache (large, machine-specific; never upload to EAS)
+.metro-cache/

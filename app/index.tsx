@@ -16,6 +16,7 @@ import {
   Keyboard,
   Pressable,
   useWindowDimensions,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -24,7 +25,8 @@ import CurrentLogo from '../components/CurrentLogo';
 import NeumorphicInput from '../components/NeumorphicInput';
 import PrimaryButton from '../components/PrimaryButton';
 import { Colors, Typography, Spacing } from '../src/theme/theme';
-import { supabase } from '../src/utils/supabase';
+import { supabase, isSupabaseConfigured, isPlausibleEmail, SUPABASE_NOT_CONFIGURED_MESSAGE } from '../src/utils/supabase';
+import { safeErrorMessage } from '../src/utils/logger';
 
 export default function PrepareYourLog() {
   const [email, setEmail] = useState('');
@@ -33,11 +35,25 @@ export default function PrepareYourLog() {
 
   const handleEmbark = useCallback(async () => {
     Keyboard.dismiss();
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) {
-      alert(error.message);
-    } else {
-      router.push({ pathname: '/otp', params: { email } });
+    if (!isSupabaseConfigured) {
+      Alert.alert('Sign-in unavailable', SUPABASE_NOT_CONFIGURED_MESSAGE);
+      return;
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    if (!isPlausibleEmail(cleanEmail)) {
+      Alert.alert('Check your email', 'Please enter a valid email address.');
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ email: cleanEmail });
+      if (error) {
+        // Supabase rate-limits this endpoint; show a generic message rather than server text.
+        Alert.alert('Could not send code', safeErrorMessage(error, 'Please wait a minute and try again.'));
+      } else {
+        router.push({ pathname: '/otp', params: { email: cleanEmail } });
+      }
+    } catch (err) {
+      Alert.alert('Network error', safeErrorMessage(err, 'Please check your connection and try again.'));
     }
   }, [email, router]);
 

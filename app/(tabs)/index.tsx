@@ -30,7 +30,8 @@ import NeumorphicInput from '../../components/NeumorphicInput';
 import PrimaryButton from '../../components/PrimaryButton';
 import CurrentLogo from '../../components/CurrentLogo';
 import Header from '../../src/components/Header';
-import { addLog } from '../../src/utils/db';
+import { addLog, MAX_NOTE_LENGTH } from '../../src/utils/db';
+import { logger } from '../../src/utils/logger';
 
 export default function LoggingScreen() {
   const [moodScore, setMoodScore] = useState<number | null>(null);
@@ -98,7 +99,7 @@ export default function LoggingScreen() {
       }, 2500);
 
     } catch (error) {
-      console.error('Failed to log:', error);
+      logger.error('Failed to log:', error);
       setIsSubmitting(false);
     }
   };
@@ -154,6 +155,7 @@ export default function LoggingScreen() {
                 placeholder="Add your thoughts...."
                 value={note}
                 onChangeText={setNote}
+                maxLength={MAX_NOTE_LENGTH}
                 multiline
                 numberOfLines={4}
               />

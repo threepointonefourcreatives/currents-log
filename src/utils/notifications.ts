@@ -1,11 +1,12 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { logger } from './logger';
 
 const IS_WEB = Platform.OS === 'web';
 
 export const requestNotificationPermission = async () => {
   if (IS_WEB) {
-    console.log('Web environment: Notification permissions bypassed.');
+    logger.debug('Web environment: Notification permissions bypassed.');
     return false;
   }
   
@@ -17,14 +18,14 @@ export const requestNotificationPermission = async () => {
     }
     return true;
   } catch (error) {
-    console.warn('Notification permission error safely caught:', error);
+    logger.warn('Notification permission error safely caught:', error);
     return false;
   }
 };
 
 export const scheduleReminder = async (type: 'morning' | 'evening' | 'custom' | 'none') => {
   if (IS_WEB) {
-    console.log(`Web environment: ${type} schedule bypassed.`);
+    logger.debug(`Web environment: ${type} schedule bypassed.`);
     return;
   }
 
@@ -37,7 +38,7 @@ export const scheduleReminder = async (type: 'morning' | 'evening' | 'custom' | 
     if (type === 'evening') hour = 20;
 
     if (type === 'custom') {
-      console.log('TODO: Implement custom time picker');
+      logger.debug('TODO: Implement custom time picker');
       return;
     }
 
@@ -53,6 +54,6 @@ export const scheduleReminder = async (type: 'morning' | 'evening' | 'custom' | 
       },
     });
   } catch (error) {
-    console.warn('Notification scheduling error safely caught:', error);
+    logger.warn('Notification scheduling error safely caught:', error);
   }
 };

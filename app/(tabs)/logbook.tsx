@@ -9,6 +9,7 @@ import Header from '../../src/components/Header';
 import { useFocusEffect } from 'expo-router';
 import { getLogs } from '../../src/utils/db';
 import { parseSafeDate } from '../../src/utils/dateUtils';
+import { logger } from '../../src/utils/logger';
 
 type MockLog = { id: string; date: string; score: number; note: string };
 
@@ -63,14 +64,14 @@ export default function LogbookScreen() {
   }, [logs]);
 
   useEffect(() => {
-    console.log('Logbook State Length:', logs.length);
+    logger.debug('Logbook State Length:', logs.length);
   }, [logs]);
 
   useFocusEffect(
     useCallback(() => {
       const fetchLogs = async () => {
         const data = await getLogs();
-        console.log('Logbook Fetched Data:', data);
+        logger.debug('Logbook fetched', { count: data.length });
         setLogs(data);
       };
       fetchLogs();

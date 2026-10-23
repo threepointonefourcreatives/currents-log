@@ -4,6 +4,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { loadProfile, UserProfile } from '../utils/profileStore';
 import { Colors, Typography, Spacing } from '../theme/theme';
 import CurrentLogo from '../../components/CurrentLogo';
+import { logger } from '../utils/logger';
 
 interface HeaderProps {
   style?: StyleProp<ViewStyle>;
@@ -15,7 +16,7 @@ export default function Header({ style }: HeaderProps) {
 
   useFocusEffect(
     useCallback(() => {
-      loadProfile().then(setProfile).catch(console.error);
+      loadProfile().then(setProfile).catch(logger.error);
     }, [])
   );
 
